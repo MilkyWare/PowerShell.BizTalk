@@ -34,10 +34,13 @@ function Get-Host {
     [CmdletBinding()]
     param (
         [Parameter()]
-        [string]$Name
+        [string[]]$Name
     )
     process {
         $instances = ([WmiClass]"root/MicrosoftBizTalkServer:MSBTS_HostSetting").GetInstances()
+        if ($PSBoundParameters.ContainsKey("Name")) {
+            $instances = $instances | Where-Object {$Name.Contains($_.Name)}
+        }
         
         $instances | ForEach-Object {
             $btsHost = [BtsHost]::new()
@@ -47,6 +50,7 @@ function Get-Host {
             $btsHost.AuthTrusted = $_.AuthTrusted
             $btsHost.Is32BitOnly = $_.IsHost32BitOnly
             $btsHost.IsDefaultHost = $_.IsDefault
+            $btsHost.LegacyWhitespace = $_.LegacyWhitespace
             $btsHost.WindowsGroup = $_.NTGroupName
 
             return $btsHost
