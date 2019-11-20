@@ -153,6 +153,11 @@ function Set-Host {
         $putOptions = [System.Management.PutOptions]::new()
         $putOptions.Type = $PutType
         if ($PSCmdlet.ShouldProcess($instance, "Modifying BizTalk Host")) {
+            $instance.Put($PutOptions)
+        }
+    }
+}
+
 function Get-Adapter {
     [CmdletBinding()]
     param (
@@ -207,8 +212,5 @@ function Get-AdapterHandlers {
             }
         }
         return $handlers
-    }
-}
-
     }
 }
