@@ -133,16 +133,62 @@ function Set-Host {
         $putOptions = [System.Management.PutOptions]::new()
         $putOptions.Type = $PutType
         if ($PSCmdlet.ShouldProcess($instance, "Modifying BizTalk Host")) {
-            $instance.Put($PutOptions)   
+function Get-Adapter {
+    [CmdletBinding()]
+    param (
+        [Parameter()]
+        [string[]]$Name
+    )
+    process {
+        $instances = ([wmiclass]"root/MicrosoftBizTalkServer:MSBTS_AdapterSetting").GetInstances()
+        if ($PSBoundParameters.ContainsKey("Name")) {
+            $instances = $instances | Where-Object {$Name.Contains($_.Name)}
+        }
+        $instances | ForEach-Object {
+            $adapter = [BtsAdapter]::new()
+            $adapter.Name = $_.Name
+            $adapter.Comment = $_.Comment
+
+            return $adapter
         }
     }
 }
 
-function Remove-AdapterHandler {
+function Get-AdapterHandlers {
     [CmdletBinding()]
     param (
+        [Parameter()]
+        [string[]]$Name,
+        [Parameter()]
+        [string[]]$HostName,
+        [Parameter()]
+        [BtsAdapterDirection]$Direction
     )
     process {
+        $handlers = [System.Collections.Generic.List[BtsAdapterHandler]]::new()
+        if (-not $PSBoundParameters.ContainsKey("Direction") -or $Direction -eq [BtsAdapterDirection]::Receive) {
+            ([WmiClass]"root/MicrosoftBizTalkServer:MSBTS_ReceiveHandler").GetInstances() | ForEach-Object {
+                $handler = [BtsAdapterHandler]::new()
+                $handler.AdapterName = $_.AdapterName
+                $handler.HostName = $_.HostName
+                $handler.Direction = [BtsAdapterDirection]::Receive
+
+                $handlers.Add($handler)
+            }
+        }
+        if (-not $PSBoundParameters.ContainsKey("Direction") -or $Direction -eq [BtsAdapterDirection]::Send) {
+            ([WmiClass]"root/MicrosoftBizTalkServer:MSBTS_SendHandler2").GetInstances() | ForEach-Object {
+                $handler = [BtsAdapterHandler]::new()
+                $handler.AdapterName = $_.AdapterName
+                $handler.HostName = $_.HostName
+                $handler.Direction = [BtsAdapterDirection]::Send
+
+                $handlers.Add($handler)
+            }
+        }
+        return $handlers
+    }
+}
 
     }
 }
