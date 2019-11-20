@@ -1,6 +1,22 @@
+enum BtsAdapterDirection {
+    Receive
+    Send
+}
+
 enum BtsHostType {
     InProcess = 1
     Isolated = 2
+}
+
+class BtsAdapter {
+    [string]$Name
+    [string]$Comment
+}
+
+class BtsAdapterHandler {
+    [string]$AdapterName
+    [string]$HostName
+    [BtsAdapterDirection]$Direction
 }
 
 class BtsHost {
