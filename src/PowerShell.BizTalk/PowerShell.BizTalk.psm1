@@ -22,7 +22,7 @@ function Get-Host {
     )
     process {
         $instances = ([WmiClass]"root/MicrosoftBizTalkServer:MSBTS_HostSetting").GetInstances()
-    
+        
         $instances | ForEach-Object {
             $btsHost = [BtsHost]::new()
             $btsHost.Name = $_.Name
@@ -34,7 +34,7 @@ function Get-Host {
             $btsHost.WindowsGroup = $_.NTGroupName
 
             return $btsHost
-}
+        }
     }
 }
 
@@ -67,9 +67,13 @@ function New-Host {
         [Parameter()]
         [switch]$AuthTrusted,
         [Parameter()]
-        [switch]$32BitOnly,
+        [switch]$Is32BitOnly,
         [Parameter()]
-        [switch]$DefaultHost
+        [switch]$IsDefaultHost,
+        [Parameter()]
+        [switch]$LegacyWhitespace,
+        [Parameter()]
+        [switch]$AllowMulitpleResponses
     )
     process {
         Set-Host @PSBoundParameters -PutType ([System.Management.PutType]::CreateOnly)
@@ -90,9 +94,13 @@ function Set-Host {
         [Parameter()]
         [switch]$AuthTrusted,
         [Parameter()]
-        [switch]$32BitOnly,
+        [switch]$Is32BitOnly,
         [Parameter()]
-        [switch]$DefaultHost,
+        [switch]$IsDefaultHost,
+        [Parameter()]
+        [switch]$LegacyWhitespace,
+        [Parameter()]
+        [switch]$AllowMulitpleResponses,
         [Parameter(Mandatory=$true)]
         [System.Management.PutType]$PutType
     )
@@ -102,10 +110,24 @@ function Set-Host {
         $instance.Name = $Name
         $instance.HostType = $HostType
         $instance.NTGroupName = $GroupName
-        $instance.AuthTrusted = [bool]$AuthTrusted
-        $instance.IsHost32BitOnly = [bool]$32BitOnly
-        $instance.HostTracking = [bool]$TrackingHost
-        $instance.IsDefault = [bool]$DefaultHost
+        if ($PSBoundParameters.ContainsKey("AuthTrusted")) {
+            $instance.AuthTrusted = [bool]$AuthTrusted
+        }
+        if ($PSBoundParameters.ContainsKey("Is32BitOnly")) {
+            $instance.AuthTrusted = [bool]$Is32BitOnly
+        }
+        if ($PSBoundParameters.ContainsKey("TrackingHost")) {
+            $instance.AuthTrusted = [bool]$TrackingHost
+        }
+        if ($PSBoundParameters.ContainsKey("IsDefaultHost")) {
+            $instance.AuthTrusted = [bool]$IsDefaultHost
+        }
+        if ($PSBoundParameters.ContainsKey("LegacyWhitespace")) {
+            $instance.AuthTrusted = [bool]$LegacyWhitespace
+        }
+        if ($PSBoundParameters.ContainsKey("AllowMultipleResponses")) {
+            $instance.AuthTrusted = [bool]$AllowMultipleResponses
+        }
         Write-Debug ($instance | Out-String)
 
         $putOptions = [System.Management.PutOptions]::new()
