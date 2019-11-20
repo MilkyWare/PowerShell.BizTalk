@@ -3,11 +3,39 @@ enum BtsHostType {
     Isolated = 2
 }
 
+class BtsHost {
+    [string]$Name
+    [BtsHostType]$HostType
+    [bool]$TrackingHost
+    [bool]$AuthTrusted
+    [bool]$Is32BitOnly
+    [bool]$IsDefaultHost
+    [string]$WindowsGroup
+    [bool]$LegacyWhitespace
+}
+
 function Get-Host {
     [CmdletBinding()]
     param (
+        [Parameter()]
+        [string]$Name
     )
+    process {
+        $instances = ([WmiClass]"root/MicrosoftBizTalkServer:MSBTS_HostSetting").GetInstances()
     
+        $instances | ForEach-Object {
+            $btsHost = [BtsHost]::new()
+            $btsHost.Name = $_.Name
+            $btsHost.HostType = $_.HostType
+            $btsHost.TrackingHost = $_.HostTracking
+            $btsHost.AuthTrusted = $_.AuthTrusted
+            $btsHost.Is32BitOnly = $_.IsHost32BitOnly
+            $btsHost.IsDefaultHost = $_.IsDefault
+            $btsHost.WindowsGroup = $_.NTGroupName
+
+            return $btsHost
+}
+    }
 }
 
 function Remove-Host {
