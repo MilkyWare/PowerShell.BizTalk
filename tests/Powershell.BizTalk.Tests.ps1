@@ -1,3 +1,4 @@
+#Requires -RunAsAdministrator
 #Requires -Modules Pester
 
 Describe "Create and delete in-process host" {
