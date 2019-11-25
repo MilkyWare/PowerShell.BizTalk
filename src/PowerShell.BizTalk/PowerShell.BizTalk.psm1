@@ -30,6 +30,7 @@ class BtsHost {
     [bool]$LegacyWhitespace
 }
 
+#region Hosts
 function Get-Host {
     [CmdletBinding()]
     param (
@@ -157,7 +158,9 @@ function Set-Host {
         }
     }
 }
+#endregion
 
+#region Adapters
 function Get-Adapter {
     [CmdletBinding()]
     param (
@@ -178,7 +181,9 @@ function Get-Adapter {
         }
     }
 }
+#endregion
 
+#region Adapter Handlers
 function Get-AdapterHandlers {
     [CmdletBinding()]
     param (
@@ -214,3 +219,4 @@ function Get-AdapterHandlers {
         return $handlers
     }
 }
+#endregion

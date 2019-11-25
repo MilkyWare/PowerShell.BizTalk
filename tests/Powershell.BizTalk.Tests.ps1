@@ -6,7 +6,7 @@ Describe "Create and delete in-process host" {
         Import-Module "$($PSScriptRoot)\..\src\PowerShell.BizTalk\PowerShell.BizTalk.psd1" -Force
     }
     It "Create Host" {
-        New-BTSHost -Name "TestInProcess" -HostType InProcess -GroupName "LEEDS\SDL-SDE BT App Users"
+        New-BTSHost -Name "TestInProcess" -HostType InProcess -GroupName "BizTalk Application Users"
     }
     Context "Cleanup" {
         Remove-BTSHost -Name "TestInProcess"
@@ -18,7 +18,7 @@ Describe "Create and delete isolated host" {
         Import-Module "$($PSScriptRoot)\..\src\PowerShell.BizTalk\PowerShell.BizTalk.psd1" -Force
     }
     It "Create Host" {
-        New-BTSHost -Name "TestIsolated" -HostType Isolated -GroupName "LEEDS\SDL-SDE BT Isolated Host Users"
+        New-BTSHost -Name "TestIsolated" -HostType Isolated -GroupName "BizTalk Isolated Host Users"
     }
     Context "Cleanup" {
         Remove-BTSHost -Name "TestIsolated"
