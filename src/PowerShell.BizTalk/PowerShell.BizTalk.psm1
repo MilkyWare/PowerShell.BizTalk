@@ -8,6 +8,12 @@ enum BtsHostType {
     Isolated = 2
 }
 
+enum BtsServiceState {
+    Stoppped = 1
+    Started = 4
+    NotApplicable = 8
+}
+
 class BtsAdapter {
     [string]$Name
     [string]$Comment
@@ -28,6 +34,12 @@ class BtsHost {
     [bool]$IsDefaultHost
     [string]$WindowsGroup
     [bool]$LegacyWhitespace
+}
+
+class BtsHostInstance {
+    [string]$Name
+    [string]$HostName
+    [string]$Logon
 }
 
 #region Hosts
@@ -160,6 +172,28 @@ function Set-Host {
 }
 #endregion
 
+#region Host Instances
+function Get-HostInstance {
+    [CmdletBinding()]
+    param (
+        [Parameter()]
+        [string[]]$Name
+    )
+    $instances = ([wmiclass]"root/MicrosoftBizTalkServer:MSBTS_HostInstance").GetInstances()
+    if ($Name) {
+        $instances = $instances | Where-Object {$Name.Contains($_.Name)}
+    }
+    $instances | ForEach-Object {
+        $instance = [BtsHostInstance]::new()
+        $instance.Name = $_.Name
+        $instance.HostName = $_.HostName
+        $instance.Logon = $_.Logon
+
+        return $instance
+    }
+}
+#endregion
+
 #region Adapters
 function Get-Adapter {
     [CmdletBinding()]
@@ -169,7 +203,7 @@ function Get-Adapter {
     )
     process {
         $instances = ([wmiclass]"root/MicrosoftBizTalkServer:MSBTS_AdapterSetting").GetInstances()
-        if ($PSBoundParameters.ContainsKey("Name")) {
+        if ($Name) {
             $instances = $instances | Where-Object {$Name.Contains($_.Name)}
         }
         $instances | ForEach-Object {
