@@ -52,7 +52,7 @@ function Get-Host {
     process {
         $instances = ([WmiClass]"root/MicrosoftBizTalkServer:MSBTS_HostSetting").GetInstances()
         if ($PSBoundParameters.ContainsKey("Name")) {
-            $instances = $instances | Where-Object {$Name.Contains($_.Name)}
+            $instances = $instances | Where-Object {$Name -contains $_.Name}
         }
         Write-Verbose "Found $($instances.Count) host(s)"
         
