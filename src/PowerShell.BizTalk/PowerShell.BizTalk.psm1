@@ -41,6 +41,7 @@ class BtsHostInstance {
     [string]$HostName
     [BtsHostType]$HostType
     [string]$ServerName
+    [BtsServiceState]$Status
     [string]$Logon
     [bool]$IsDisabled
 }
@@ -202,6 +203,7 @@ function Get-HostInstance {
         $instance.HostName = $_.HostName
         $instance.HostType = [BtsHostType]$_.HostType
         $instance.ServerName = $_.RunningServer
+        $instance.Status = [BtsServiceState]$_.ServiceState
         $instance.Logon = $_.Logon
         $instance.IsDisabled = $_.IsDisabled
 
