@@ -39,7 +39,10 @@ class BtsHost {
 class BtsHostInstance {
     [string]$Name
     [string]$HostName
+    [BtsHostType]$HostType
+    [string]$ServerName
     [string]$Logon
+    [bool]$IsDisabled
 }
 
 #region Hosts
@@ -178,17 +181,29 @@ function Get-HostInstance {
     [CmdletBinding()]
     param (
         [Parameter()]
-        [string[]]$Name
+        [string[]]$Name,
+        [Parameter()]
+        [System.Collections.Generic.List[string]]$ServerName
     )
     $instances = ([wmiclass]"root/MicrosoftBizTalkServer:MSBTS_HostInstance").GetInstances()
     if ($Name) {
-        $instances = $instances | Where-Object {$Name.Contains($_.Name)}
+        Write-Verbose "Filtering instances by name"
+        $instances = $instances | Where-Object {$Name -contains $_.HostName}
     }
+    if ($ServerName) {
+        Write-Verbose "Filtering instances by server"
+        $instances = $instances | Where-Object {$ServerName -contains $_.RunningServer}
+    }
+    Write-Verbose "Found $($instances.Count) host instance(s)"
+
     $instances | ForEach-Object {
         $instance = [BtsHostInstance]::new()
         $instance.Name = $_.Name
         $instance.HostName = $_.HostName
+        $instance.HostType = [BtsHostType]$_.HostType
+        $instance.ServerName = $_.RunningServer
         $instance.Logon = $_.Logon
+        $instance.IsDisabled = $_.IsDisabled
 
         return $instance
     }
