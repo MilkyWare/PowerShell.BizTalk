@@ -30,6 +30,15 @@ Describe "Get hosts" {
         Import-Module "$($PSScriptRoot)\..\src\PowerShell.BizTalk\PowerShell.BizTalk.psd1" -Force
     }
     It "Get list of hosts" {
-        Get-BTSHost -Verbose
+        Get-BTSHost -Name "BizTalkServerApplication" -Verbose | Should -HaveCount 1
+    }
+}
+
+Describe "Get host instances" {
+    BeforeAll {
+        Import-Module "$($PSScriptRoot)\..\src\PowerShell.BizTalk\PowerShell.BizTalk.psd1" -Force
+    }
+    It "Get list of host instances" {
+        Get-BTSHostInstance -Name "BizTalkServerApplication" -Verbose | Should -HaveCount 1
     }
 }
