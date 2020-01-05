@@ -54,6 +54,7 @@ function Get-Host {
         if ($PSBoundParameters.ContainsKey("Name")) {
             $instances = $instances | Where-Object {$Name.Contains($_.Name)}
         }
+        Write-Verbose "Found $($instances.Count) host(s)"
         
         $instances | ForEach-Object {
             $btsHost = [BtsHost]::new()
