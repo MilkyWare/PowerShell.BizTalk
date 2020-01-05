@@ -9,7 +9,7 @@ enum BtsHostType {
 }
 
 enum BtsServiceState {
-    Stoppped = 1
+    Stopped = 1
     Started = 4
     NotApplicable = 8
 }
