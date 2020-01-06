@@ -40,7 +40,7 @@ class BtsHostInstance {
     [string]$Name
     [string]$HostName
     [BtsHostType]$HostType
-    [string]$ServerName
+    [string]$ComputerName
     [BtsServiceState]$Status
     [string]$Logon
     [bool]$IsDisabled
@@ -77,21 +77,6 @@ function Get-Host {
     }
 }
 
-function Remove-Host {
-    [CmdletBinding(SupportsShouldProcess=$true)]
-    param (
-        [Parameter(Mandatory = $true)]
-        [string]$Name
-    )
-    process {
-        $instance = ([WmiClass]"root/MicrosoftBizTalkServer:MSBTS_Host").CreateInstance()
-        $instance.Name = $Name
-        if ($PSCmdlet.ShouldProcess($instance, "Deleting BizTalk Host")) {
-            $instance.Delete()   
-        }
-    }
-}
-
 function New-Host {
     [CmdletBinding(SupportsShouldProcess=$true)]
     param (
@@ -116,6 +101,21 @@ function New-Host {
     )
     process {
         Set-Host @PSBoundParameters -PutType ([System.Management.PutType]::CreateOnly)
+    }
+}
+
+function Remove-Host {
+    [CmdletBinding(SupportsShouldProcess=$true)]
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$Name
+    )
+    process {
+        $instance = ([WmiClass]"root/MicrosoftBizTalkServer:MSBTS_Host").CreateInstance()
+        $instance.Name = $Name
+        if ($PSCmdlet.ShouldProcess($instance, "Deleting BizTalk Host")) {
+            $instance.Delete()   
+        }
     }
 }
 
@@ -185,16 +185,16 @@ function Get-HostInstance {
         [Parameter()]
         [string[]]$Name,
         [Parameter()]
-        [string[]]$ServerName
+        [string[]]$ComputerName
     )
     $instances = ([wmiclass]"root/MicrosoftBizTalkServer:MSBTS_HostInstance").GetInstances()
     if ($Name) {
         Write-Verbose "Filtering instances by name"
         $instances = $instances | Where-Object {$Name -contains $_.HostName}
     }
-    if ($ServerName) {
+    if ($ComputerName) {
         Write-Verbose "Filtering instances by server"
-        $instances = $instances | Where-Object {$ServerName -contains $_.RunningServer}
+        $instances = $instances | Where-Object {$ComputerName -contains $_.RunningServer}
     }
     Write-Verbose "Found $($instances.Count) host instance(s)"
 
@@ -203,12 +203,53 @@ function Get-HostInstance {
         $instance.Name = $_.Name
         $instance.HostName = $_.HostName
         $instance.HostType = [BtsHostType]$_.HostType
-        $instance.ServerName = $_.RunningServer
+        $instance.ComputerName = $_.RunningServer
         $instance.Status = [BtsServiceState]$_.ServiceState
         $instance.Logon = $_.Logon
         $instance.IsDisabled = $_.IsDisabled
 
         return $instance
+    }
+}
+
+function New-HostInstance {
+    [CmdletBinding(SupportsShouldProcess=$true)]
+    param (
+        [Parameter(Mandatory=$true)]
+        [string]$Name,
+        [Parameter(Mandatory=$true)]
+        [string]$ComputerName,
+        [Parameter(Mandatory=$true)]
+        [pscredential]$Credential,
+        [Parameter()]
+        [switch]$StartOnCreation
+    )
+    process {
+        #TODO Add check for existing server host
+        Write-Verbose "Creating server host"
+        [System.Management.ManagementObject]$serverHost = ([WmiClass]"root/MicrosoftBizTalkServer:MSBTS_ServerHost").CreateInstance()
+        $serverHost.HostName = $Name
+        $serverHost.ServerName = $ComputerName
+        Write-Debug ($serverHost | Out-String)
+
+        $serverHost.Map() | Out-Null
+
+        #TODO Add check for existing host instance
+        [System.Management.ManagementObject]$instance = ([wmiclass]"root/MicrosoftBizTalkServer:MSBTS_HostInstance").CreateInstance()
+        $hostInstanceName = "Microsoft BizTalk Server $Name $ComputerName"
+        Write-Debug "HostInstanceName = $hostInstanceName"
+
+        $instance.Name = $hostInstanceName
+        $instance.HostName = $Name
+        $instance.RunningServer = $ComputerName
+        Write-Debug ($instance | Out-String)
+
+        if ($PSCmdlet.ShouldProcess($instance, "Installing host instance")) {
+            Write-Verbose "Installing host instance"
+            $instance.Install($Credential.UserName, $Credential.GetNetworkCredential().Password, $true) | Out-Null
+        }
+
+        #TODO Start instance after creation
     }
 }
 #endregion
