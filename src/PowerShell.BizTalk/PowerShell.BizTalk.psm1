@@ -282,6 +282,32 @@ function New-HostInstance {
         }
     }
 }
+function Remove-HostInstance
+{
+    [CmdletBinding(SupportsShouldProcess = $true)]
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$HostName,
+        [Parameter()]
+        [string]$ComputerName = $env:COMPUTERNAME
+    )
+    process
+    {
+        $instance = ([wmiclass]"root/MicrosoftBizTalkServer:MSBTS_HostInstance").GetInstances() | Where-Object {
+            ($_.HostName -eq $HostName) -and ($_.RunningServer -eq $ComputerName)
+        }
+
+        if ($instance)
+        {
+            Write-Verbose "Host instacnce found"
+            if ($PSCmdlet.ShouldProcess($instance, "Uninstalling host instance"))
+            {
+                Write-Verbose "Uninstalling host instance"
+                $instance.Uninstall() | Out-Null
+            }
+        }
+    }
+}
 #endregion
 
 #region Adapters
