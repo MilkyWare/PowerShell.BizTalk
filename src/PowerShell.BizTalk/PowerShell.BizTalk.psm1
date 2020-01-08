@@ -238,7 +238,10 @@ function New-HostInstance {
                 $serverHost.ServerName = $ComputerName
                 Write-Debug ($serverHost | Out-String)
     
+                if ($PSCmdlet.ShouldProcess($serverHost, "Installing host instance")) {
+                    Write-Verbose "Mapping server host"
                 $serverHost.Map() | Out-Null
+            }
             }
             catch {
                 throw $_
