@@ -216,40 +216,67 @@ function New-HostInstance {
     [CmdletBinding(SupportsShouldProcess=$true)]
     param (
         [Parameter(Mandatory=$true)]
-        [string]$Name,
-        [Parameter(Mandatory=$true)]
-        [string]$ComputerName,
+        [string]$HostName,
         [Parameter(Mandatory=$true)]
         [pscredential]$Credential,
+        [Parameter()]
+        [string]$ComputerName = $env:COMPUTERNAME,
         [Parameter()]
         [switch]$StartOnCreation
     )
     process {
-        #TODO Add check for existing server host
-        Write-Verbose "Creating server host"
-        [System.Management.ManagementObject]$serverHost = ([WmiClass]"root/MicrosoftBizTalkServer:MSBTS_ServerHost").CreateInstance()
-        $serverHost.HostName = $Name
-        $serverHost.ServerName = $ComputerName
-        Write-Debug ($serverHost | Out-String)
-
-        $serverHost.Map() | Out-Null
-
-        #TODO Add check for existing host instance
-        [System.Management.ManagementObject]$instance = ([wmiclass]"root/MicrosoftBizTalkServer:MSBTS_HostInstance").CreateInstance()
-        $hostInstanceName = "Microsoft BizTalk Server $Name $ComputerName"
-        Write-Debug "HostInstanceName = $hostInstanceName"
-
-        $instance.Name = $hostInstanceName
-        $instance.HostName = $Name
-        $instance.RunningServer = $ComputerName
-        Write-Debug ($instance | Out-String)
-
-        if ($PSCmdlet.ShouldProcess($instance, "Installing host instance")) {
-            Write-Verbose "Installing host instance"
-            $instance.Install($Credential.UserName, $Credential.GetNetworkCredential().Password, $true) | Out-Null
+        Write-Verbose "Checkng for existing server host"
+        $serverHostFound = ([WmiClass]"root/MicrosoftBizTalkServer:MSBTS_ServerHost").GetInstances() | Where-Object {
+            ($_.HostName -eq $HostName) -and ($_.ServerName = $ComputerName) -and $_.IsMapped
         }
 
-        #TODO Start instance after creation
+        if (-not $serverHostFound) {
+            try {
+                Write-Verbose "Creating server host"
+                [System.Management.ManagementObject]$serverHost = ([WmiClass]"root/MicrosoftBizTalkServer:MSBTS_ServerHost").CreateInstance()
+                $serverHost.HostName = $HostName
+                $serverHost.ServerName = $ComputerName
+                Write-Debug ($serverHost | Out-String)
+    
+                $serverHost.Map() | Out-Null
+            }
+            catch {
+                throw $_
+            }
+        }
+        else {
+            Write-Verbose "Existing server host found"
+            Write-Debug ($serverHostFound | Out-String)
+        }
+
+        Write-Verbose "Checkng for existing host instance"
+        $instanceFound = ([wmiclass]"root/MicrosoftBizTalkServer:MSBTS_HostInstance").GetInstances() | Where-Object {
+            ($_.HostName -eq $HostName) -and ($_.RunningServer -eq $ComputerName)
+        }
+        if (-not $instanceFound) {
+            try {
+                [System.Management.ManagementObject]$instance = ([wmiclass]"root/MicrosoftBizTalkServer:MSBTS_HostInstance").CreateInstance()
+                $hostInstanceName = "Microsoft BizTalk Server $Name $ComputerName"
+                Write-Debug "HostInstanceName = $hostInstanceName"
+    
+                $instance.Name = $hostInstanceName
+                $instance.HostName = $HostName
+                $instance.RunningServer = $ComputerName
+                Write-Debug ($instance | Out-String)
+    
+                if ($PSCmdlet.ShouldProcess($instance, "Installing host instance")) {
+                    Write-Verbose "Installing host instance"
+                    $instance.Install($Credential.UserName, $Credential.GetNetworkCredential().Password, $true) | Out-Null
+                }
+            }
+            catch {
+                throw $_
+            }
+        }
+        else {
+            Write-Error "Existing host instance found"
+            Write-Debug ($instanceFound | Out-String)
+        }
     }
 }
 #endregion
