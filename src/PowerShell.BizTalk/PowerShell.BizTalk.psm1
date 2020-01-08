@@ -1,31 +1,37 @@
-enum BtsAdapterDirection {
+enum BtsAdapterDirection
+{
     Receive
     Send
 }
 
-enum BtsHostType {
+enum BtsHostType
+{
     InProcess = 1
     Isolated = 2
 }
 
-enum BtsServiceState {
+enum BtsServiceState
+{
     Stopped = 1
     Started = 4
     NotApplicable = 8
 }
 
-class BtsAdapter {
+class BtsAdapter
+{
     [string]$Name
     [string]$Comment
 }
 
-class BtsAdapterHandler {
+class BtsAdapterHandler
+{
     [string]$AdapterName
     [string]$HostName
     [BtsAdapterDirection]$Direction
 }
 
-class BtsHost {
+class BtsHost
+{
     [string]$Name
     [BtsHostType]$HostType
     [bool]$TrackingHost
@@ -36,7 +42,8 @@ class BtsHost {
     [bool]$LegacyWhitespace
 }
 
-class BtsHostInstance {
+class BtsHostInstance
+{
     [string]$Name
     [string]$HostName
     [BtsHostType]$HostType
@@ -47,17 +54,20 @@ class BtsHostInstance {
 }
 
 #region Hosts
-function Get-Host {
+function Get-Host
+{
     [CmdletBinding()]
     param (
         [Parameter()]
         [string[]]$Name
     )
-    process {
+    process
+    {
         $instances = ([WmiClass]"root/MicrosoftBizTalkServer:MSBTS_HostSetting").GetInstances()
-        if ($PSBoundParameters.ContainsKey("Name")) {
+        if ($PSBoundParameters.ContainsKey("Name"))
+        {
             Write-Verbose "Filtering hosts by name"
-            $instances = $instances | Where-Object {$Name -contains $_.Name}
+            $instances = $instances | Where-Object { $Name -contains $_.Name }
         }
         Write-Verbose "Found $($instances.Count) host(s)"
         
@@ -77,14 +87,15 @@ function Get-Host {
     }
 }
 
-function New-Host {
-    [CmdletBinding(SupportsShouldProcess=$true)]
+function New-Host
+{
+    [CmdletBinding(SupportsShouldProcess = $true)]
     param (
         [Parameter(Mandatory = $true)]
         [string]$Name,
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [BtsHostType]$HostType,
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [string]$GroupName,
         [Parameter()]
         [switch]$TrackingHost,
@@ -99,34 +110,39 @@ function New-Host {
         [Parameter()]
         [switch]$AllowMulitpleResponses
     )
-    process {
+    process
+    {
         Set-Host @PSBoundParameters -PutType ([System.Management.PutType]::CreateOnly)
     }
 }
 
-function Remove-Host {
-    [CmdletBinding(SupportsShouldProcess=$true)]
+function Remove-Host
+{
+    [CmdletBinding(SupportsShouldProcess = $true)]
     param (
         [Parameter(Mandatory = $true)]
         [string]$Name
     )
-    process {
+    process
+    {
         $instance = ([WmiClass]"root/MicrosoftBizTalkServer:MSBTS_Host").CreateInstance()
         $instance.Name = $Name
-        if ($PSCmdlet.ShouldProcess($instance, "Deleting BizTalk Host")) {
+        if ($PSCmdlet.ShouldProcess($instance, "Deleting BizTalk Host"))
+        {
             $instance.Delete()   
         }
     }
 }
 
-function Set-Host {
-    [CmdletBinding(SupportsShouldProcess=$true)]
+function Set-Host
+{
+    [CmdletBinding(SupportsShouldProcess = $true)]
     param (
         [Parameter(Mandatory = $true)]
         [string]$Name,
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [BtsHostType]$HostType,
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [string]$GroupName,
         [Parameter()]
         [switch]$TrackingHost,
@@ -140,38 +156,46 @@ function Set-Host {
         [switch]$LegacyWhitespace,
         [Parameter()]
         [switch]$AllowMulitpleResponses,
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [System.Management.PutType]$PutType
     )
-    process {
+    process
+    {
         Write-Verbose "Building host WMI instance"
         $instance = ([WmiClass]"root/MicrosoftBizTalkServer:MSBTS_HostSetting").CreateInstance()
         $instance.Name = $Name
         $instance.HostType = $HostType
         $instance.NTGroupName = $GroupName
-        if ($PSBoundParameters.ContainsKey("AuthTrusted")) {
+        if ($PSBoundParameters.ContainsKey("AuthTrusted"))
+        {
             $instance.AuthTrusted = [bool]$AuthTrusted
         }
-        if ($PSBoundParameters.ContainsKey("Is32BitOnly")) {
+        if ($PSBoundParameters.ContainsKey("Is32BitOnly"))
+        {
             $instance.AuthTrusted = [bool]$Is32BitOnly
         }
-        if ($PSBoundParameters.ContainsKey("TrackingHost")) {
+        if ($PSBoundParameters.ContainsKey("TrackingHost"))
+        {
             $instance.AuthTrusted = [bool]$TrackingHost
         }
-        if ($PSBoundParameters.ContainsKey("IsDefaultHost")) {
+        if ($PSBoundParameters.ContainsKey("IsDefaultHost"))
+        {
             $instance.AuthTrusted = [bool]$IsDefaultHost
         }
-        if ($PSBoundParameters.ContainsKey("LegacyWhitespace")) {
+        if ($PSBoundParameters.ContainsKey("LegacyWhitespace"))
+        {
             $instance.AuthTrusted = [bool]$LegacyWhitespace
         }
-        if ($PSBoundParameters.ContainsKey("AllowMultipleResponses")) {
+        if ($PSBoundParameters.ContainsKey("AllowMultipleResponses"))
+        {
             $instance.AuthTrusted = [bool]$AllowMultipleResponses
         }
         Write-Debug ($instance | Out-String)
 
         $putOptions = [System.Management.PutOptions]::new()
         $putOptions.Type = $PutType
-        if ($PSCmdlet.ShouldProcess($instance, "Modifying BizTalk Host")) {
+        if ($PSCmdlet.ShouldProcess($instance, "Modifying BizTalk Host"))
+        {
             $instance.Put($PutOptions)
         }
     }
@@ -179,7 +203,8 @@ function Set-Host {
 #endregion
 
 #region Host Instances
-function Get-HostInstance {
+function Get-HostInstance
+{
     [CmdletBinding()]
     param (
         [Parameter()]
@@ -188,13 +213,15 @@ function Get-HostInstance {
         [string[]]$ComputerName
     )
     $instances = ([wmiclass]"root/MicrosoftBizTalkServer:MSBTS_HostInstance").GetInstances()
-    if ($Name) {
+    if ($Name)
+    {
         Write-Verbose "Filtering instances by name"
-        $instances = $instances | Where-Object {$Name -contains $_.HostName}
+        $instances = $instances | Where-Object { $Name -contains $_.HostName }
     }
-    if ($ComputerName) {
+    if ($ComputerName)
+    {
         Write-Verbose "Filtering instances by server"
-        $instances = $instances | Where-Object {$ComputerName -contains $_.RunningServer}
+        $instances = $instances | Where-Object { $ComputerName -contains $_.RunningServer }
     }
     Write-Verbose "Found $($instances.Count) host instance(s)"
 
@@ -212,42 +239,49 @@ function Get-HostInstance {
     }
 }
 
-function New-HostInstance {
-    [CmdletBinding(SupportsShouldProcess=$true)]
+function New-HostInstance
+{
+    [CmdletBinding(SupportsShouldProcess = $true)]
     param (
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [string]$HostName,
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [pscredential]$Credential,
         [Parameter()]
         [string]$ComputerName = $env:COMPUTERNAME,
         [Parameter()]
         [switch]$StartOnCreation
     )
-    process {
+    process
+    {
         Write-Verbose "Checkng for existing server host"
         $serverHostFound = ([WmiClass]"root/MicrosoftBizTalkServer:MSBTS_ServerHost").GetInstances() | Where-Object {
             ($_.HostName -eq $HostName) -and ($_.ServerName = $ComputerName) -and $_.IsMapped
         }
 
-        if (-not $serverHostFound) {
-            try {
+        if (-not $serverHostFound)
+        {
+            try
+            {
                 Write-Verbose "Creating server host"
                 [System.Management.ManagementObject]$serverHost = ([WmiClass]"root/MicrosoftBizTalkServer:MSBTS_ServerHost").CreateInstance()
                 $serverHost.HostName = $HostName
                 $serverHost.ServerName = $ComputerName
                 Write-Debug ($serverHost | Out-String)
     
-                if ($PSCmdlet.ShouldProcess($serverHost, "Installing host instance")) {
+                if ($PSCmdlet.ShouldProcess($serverHost, "Installing host instance"))
+                {
                     Write-Verbose "Mapping server host"
-                $serverHost.Map() | Out-Null
+                    $serverHost.Map() | Out-Null
+                }
             }
-            }
-            catch {
+            catch
+            {
                 throw $_
             }
         }
-        else {
+        else
+        {
             Write-Verbose "Existing server host found"
             Write-Debug ($serverHostFound | Out-String)
         }
@@ -256,8 +290,10 @@ function New-HostInstance {
         $instanceFound = ([wmiclass]"root/MicrosoftBizTalkServer:MSBTS_HostInstance").GetInstances() | Where-Object {
             ($_.HostName -eq $HostName) -and ($_.RunningServer -eq $ComputerName)
         }
-        if (-not $instanceFound) {
-            try {
+        if (-not $instanceFound)
+        {
+            try
+            {
                 [System.Management.ManagementObject]$instance = ([wmiclass]"root/MicrosoftBizTalkServer:MSBTS_HostInstance").CreateInstance()
                 $hostInstanceName = "Microsoft BizTalk Server $Name $ComputerName"
                 Write-Debug "HostInstanceName = $hostInstanceName"
@@ -267,21 +303,25 @@ function New-HostInstance {
                 $instance.RunningServer = $ComputerName
                 Write-Debug ($instance | Out-String)
     
-                if ($PSCmdlet.ShouldProcess($instance, "Installing host instance")) {
+                if ($PSCmdlet.ShouldProcess($instance, "Installing host instance"))
+                {
                     Write-Verbose "Installing host instance"
                     $instance.Install($Credential.UserName, $Credential.GetNetworkCredential().Password, $true) | Out-Null
                 }
             }
-            catch {
+            catch
+            {
                 throw $_
             }
         }
-        else {
+        else
+        {
             Write-Error "Existing host instance found"
             Write-Debug ($instanceFound | Out-String)
         }
     }
 }
+
 function Remove-HostInstance
 {
     [CmdletBinding(SupportsShouldProcess = $true)]
@@ -311,16 +351,19 @@ function Remove-HostInstance
 #endregion
 
 #region Adapters
-function Get-Adapter {
+function Get-Adapter
+{
     [CmdletBinding()]
     param (
         [Parameter()]
         [string[]]$Name
     )
-    process {
+    process
+    {
         $instances = ([wmiclass]"root/MicrosoftBizTalkServer:MSBTS_AdapterSetting").GetInstances()
-        if ($Name) {
-            $instances = $instances | Where-Object {$Name.Contains($_.Name)}
+        if ($Name)
+        {
+            $instances = $instances | Where-Object { $Name.Contains($_.Name) }
         }
         $instances | ForEach-Object {
             $adapter = [BtsAdapter]::new()
@@ -334,7 +377,8 @@ function Get-Adapter {
 #endregion
 
 #region Adapter Handlers
-function Get-AdapterHandlers {
+function Get-AdapterHandlers
+{
     [CmdletBinding()]
     param (
         [Parameter()]
@@ -344,9 +388,11 @@ function Get-AdapterHandlers {
         [Parameter()]
         [BtsAdapterDirection]$Direction
     )
-    process {
+    process
+    {
         $handlers = [System.Collections.Generic.List[BtsAdapterHandler]]::new()
-        if (-not $PSBoundParameters.ContainsKey("Direction") -or $Direction -eq [BtsAdapterDirection]::Receive) {
+        if (-not $PSBoundParameters.ContainsKey("Direction") -or $Direction -eq [BtsAdapterDirection]::Receive)
+        {
             ([WmiClass]"root/MicrosoftBizTalkServer:MSBTS_ReceiveHandler").GetInstances() | ForEach-Object {
                 $handler = [BtsAdapterHandler]::new()
                 $handler.AdapterName = $_.AdapterName
@@ -356,7 +402,8 @@ function Get-AdapterHandlers {
                 $handlers.Add($handler)
             }
         }
-        if (-not $PSBoundParameters.ContainsKey("Direction") -or $Direction -eq [BtsAdapterDirection]::Send) {
+        if (-not $PSBoundParameters.ContainsKey("Direction") -or $Direction -eq [BtsAdapterDirection]::Send)
+        {
             ([WmiClass]"root/MicrosoftBizTalkServer:MSBTS_SendHandler2").GetInstances() | ForEach-Object {
                 $handler = [BtsAdapterHandler]::new()
                 $handler.AdapterName = $_.AdapterName
