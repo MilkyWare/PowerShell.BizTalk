@@ -64,6 +64,7 @@ class BtsHostInstance
     [string]$HostName
     [BtsHostType]$HostType
     [string]$ComputerName
+    [BtsConfigurationState]$ConfigurationState
     [BtsServiceState]$Status
     [string]$Logon
     [bool]$IsDisabled
@@ -247,6 +248,7 @@ function Get-HostInstance
         $instance.HostName = $_.HostName
         $instance.HostType = [BtsHostType]$_.HostType
         $instance.ComputerName = $_.RunningServer
+        $instance.ConfigurationState = [BtsConfigurationState]$_.ConfigurationState
         $instance.Status = [BtsServiceState]$_.ServiceState
         $instance.Logon = $_.Logon
         $instance.IsDisabled = $_.IsDisabled
@@ -345,7 +347,9 @@ function Remove-HostInstance
         [Parameter(Mandatory = $true)]
         [string]$HostName,
         [Parameter()]
-        [string]$ComputerName = $env:COMPUTERNAME
+        [string]$ComputerName = $env:COMPUTERNAME,
+        [Parameter()]
+        [switch]$Force
     )
     process
     {
@@ -379,8 +383,14 @@ function Remove-HostInstance
             Write-Verbose "Server host found"
             if ($PSCmdlet.ShouldProcess($serverHost), "Server host unmapped")
             {
-                Write-Verbose "Unmapping server host"
-                $serverHost.Unmap() | Out-Null
+                if ($Force) {
+                    Write-Verbose "Forcefully unmapping server host"
+                    $serverHost.ForceUnmap() | Out-Null
+                }
+                else {
+                    Write-Verbose "Unmapping server host"
+                    $serverHost.Unmap() | Out-Null
+                }
             }
         }
     }
