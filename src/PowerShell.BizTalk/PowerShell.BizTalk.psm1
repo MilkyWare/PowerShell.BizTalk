@@ -1,3 +1,5 @@
+#Requires -RunAsAdministrator
+
 enum BtsAdapterDirection
 {
     Receive
