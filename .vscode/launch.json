@@ -5,17 +5,6 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Import Module",
-            "type": "PowerShell",
-            "request": "launch",
-            "script": "Import-Module",
-            "cwd": "${workspaceFolder}",
-            "args": [
-                "./src/PowerShell.BizTalk/PowerShell.BizTalk.psm1",
-                "-Force"
-            ]
-        },
-        {
             "name": "Import Manifest",
             "type": "PowerShell",
             "request": "launch",
@@ -34,14 +23,6 @@
             "args": [
                 "-Script ./tests/PowerShell.BizTalk.Tests.ps1"
             ]
-        },
-        {
-            "name": "PowerShell: Launch Current File",
-            "type": "PowerShell",
-            "request": "launch",
-            "script": "${file}",
-            "cwd": "${file}"
-        },
-        
+        }
     ]
 }
