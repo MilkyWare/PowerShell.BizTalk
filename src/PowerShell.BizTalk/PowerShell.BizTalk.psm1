@@ -6,6 +6,15 @@ enum BtsAdapterDirection
     Send
 }
 
+enum BtsConfigurationState
+{
+    Installed = 1
+    InstallationFailed = 2
+    UninstallationFailed = 3
+    UpdateFailed = 4
+    NotInstalled = 5 
+}
+
 enum BtsHostType
 {
     InProcess = 1
@@ -15,7 +24,12 @@ enum BtsHostType
 enum BtsServiceState
 {
     Stopped = 1
+    StartPending = 2
+    StopPending = 3
     Started = 4
+    ContinuePending = 5
+    PausePending = 6
+    Paused = 7
     NotApplicable = 8
 }
 
@@ -339,14 +353,18 @@ function Remove-HostInstance
             ($_.HostName -eq $HostName) -and ($_.RunningServer -eq $ComputerName)
         }
 
-        if ($instance) {
+        if ($instance)
+        {
             Write-Verbose "Host instance found"
-            if ($PSCmdlet.ShouldProcess($instance, "Uninstalling host instance")) {
+            if ($PSCmdlet.ShouldProcess($instance, "Uninstalling host instance"))
+            {
                 Write-Verbose "Host instance uninstalled"
-                try {
+                try
+                {
                     $instance.Uninstall() | Out-Null
                 }
-                catch {
+                catch
+                {
                     Write-Warning "Failed to uninstall instance"
                 }
             }
@@ -356,9 +374,11 @@ function Remove-HostInstance
             ($_.HostName -eq $HostName) -and ($_.ServerName -eq $ComputerName)
         }
 
-        if ($serverHost) {
+        if ($serverHost)
+        {
             Write-Verbose "Server host found"
-            if ($PSCmdlet.ShouldProcess($serverHost), "Server host unmapped") {
+            if ($PSCmdlet.ShouldProcess($serverHost), "Server host unmapped")
+            {
                 Write-Verbose "Unmapping server host"
                 $serverHost.Unmap() | Out-Null
             }
