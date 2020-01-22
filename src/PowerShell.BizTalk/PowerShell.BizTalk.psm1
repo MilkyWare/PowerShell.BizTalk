@@ -210,15 +210,15 @@ function Get-HostInstance
     [CmdletBinding()]
     param (
         [Parameter()]
-        [string[]]$Name,
+        [string[]]$HostName,
         [Parameter()]
         [string[]]$ComputerName
     )
     $instances = ([wmiclass]"root/MicrosoftBizTalkServer:MSBTS_HostInstance").GetInstances()
-    if ($Name)
+    if ($HostName)
     {
         Write-Verbose "Filtering instances by name"
-        $instances = $instances | Where-Object { $Name -contains $_.HostName }
+        $instances = $instances | Where-Object { $HostName -contains $_.HostName }
     }
     if ($ComputerName)
     {
@@ -339,13 +339,28 @@ function Remove-HostInstance
             ($_.HostName -eq $HostName) -and ($_.RunningServer -eq $ComputerName)
         }
 
-        if ($instance)
-        {
-            Write-Verbose "Host instacnce found"
-            if ($PSCmdlet.ShouldProcess($instance, "Uninstalling host instance"))
-            {
-                Write-Verbose "Uninstalling host instance"
-                $instance.Uninstall() | Out-Null
+        if ($instance) {
+            Write-Verbose "Host instance found"
+            if ($PSCmdlet.ShouldProcess($instance, "Uninstalling host instance")) {
+                Write-Verbose "Host instance uninstalled"
+                try {
+                    $instance.Uninstall() | Out-Null
+                }
+                catch {
+                    Write-Warning "Failed to uninstall instance"
+                }
+            }
+        }
+
+        $serverHost = ([WmiClass]"root/MicrosoftBizTalkServer:MSBTS_ServerHost").GetInstances() | Where-Object {
+            ($_.HostName -eq $HostName) -and ($_.ServerName -eq $ComputerName)
+        }
+
+        if ($serverHost) {
+            Write-Verbose "Server host found"
+            if ($PSCmdlet.ShouldProcess($serverHost), "Server host unmapped") {
+                Write-Verbose "Unmapping server host"
+                $serverHost.Unmap() | Out-Null
             }
         }
     }

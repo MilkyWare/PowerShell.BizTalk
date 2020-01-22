@@ -69,7 +69,7 @@ Copyright = '(c) MilkyWare. All rights reserved.'
 # NestedModules = @()
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
-FunctionsToExport = 'Get-AdapterHandlers', 'Get-Adapter', 'Get-Host', 'Remove-Host', 'New-Host', 'Get-HostInstance', 'New-HostInstance'
+FunctionsToExport = 'Get-AdapterHandlers', 'Get-Adapter', 'Get-Host', 'Remove-Host', 'New-Host', 'Get-HostInstance', 'New-HostInstance', 'Remove-HostInstance'
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
 CmdletsToExport = '*'
