@@ -354,44 +354,53 @@ function Remove-HostInstance
     process
     {
         $instance = ([wmiclass]"root/MicrosoftBizTalkServer:MSBTS_HostInstance").GetInstances() | Where-Object {
-            ($_.HostName -eq $HostName) -and ($_.RunningServer -eq $ComputerName)
+            $_.HostName -eq $HostName -and $_.RunningServer -eq $ComputerName
         }
 
         if ($instance)
         {
             Write-Verbose "Host instance found"
-            if ($PSCmdlet.ShouldProcess($instance, "Uninstalling host instance"))
+
+            if ($instance.ConfigurationState -eq [BtsConfigurationState]::Installed)
             {
-                Write-Verbose "Host instance uninstalled"
-                try
+                if ($PSCmdlet.ShouldProcess($instance, "Uninstalling host instance"))
                 {
-                    $instance.Uninstall() | Out-Null
+                    try
+                    {
+                        $instance.Uninstall() | Out-Null
+                        Write-Verbose "Host instance uninstalled"
+                    }
+                    catch
+                    {
+                        Write-Error -Exception $Error[0].Exception
+                    }
                 }
-                catch
+            }
+
+            $serverHost = ([WmiClass]"root/MicrosoftBizTalkServer:MSBTS_ServerHost").GetInstances() | Where-Object {
+                ($_.HostName -eq $HostName) -and ($_.ServerName -eq $ComputerName)
+            }
+    
+            if ($serverHost)
+            {
+                Write-Verbose "Server host found"
+                if ($PSCmdlet.ShouldProcess($serverHost), "Server host unmapped")
                 {
-                    Write-Warning "Failed to uninstall instance"
+                    if ($Force)
+                    {
+                        $serverHost.ForceUnmap() | Out-Null
+                        Write-Verbose "Forcibly unmappws server host"
+                    }
+                    else
+                    {
+                        $serverHost.Unmap() | Out-Null
+                        Write-Verbose "Unmapped server host"
+                    }
                 }
             }
         }
-
-        $serverHost = ([WmiClass]"root/MicrosoftBizTalkServer:MSBTS_ServerHost").GetInstances() | Where-Object {
-            ($_.HostName -eq $HostName) -and ($_.ServerName -eq $ComputerName)
-        }
-
-        if ($serverHost)
-        {
-            Write-Verbose "Server host found"
-            if ($PSCmdlet.ShouldProcess($serverHost), "Server host unmapped")
-            {
-                if ($Force) {
-                    Write-Verbose "Forcefully unmapping server host"
-                    $serverHost.ForceUnmap() | Out-Null
-                }
-                else {
-                    Write-Verbose "Unmapping server host"
-                    $serverHost.Unmap() | Out-Null
-                }
-            }
+        else {
+            Write-Warning "Host instance not found"
         }
     }
 }
