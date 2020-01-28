@@ -358,32 +358,35 @@ function Remove-HostInstance
                     }
                 }
             }
-
-            $serverHost = ([WmiClass]"root/MicrosoftBizTalkServer:MSBTS_ServerHost").GetInstances() | Where-Object {
-                ($_.HostName -eq $HostName) -and ($_.ServerName -eq $ComputerName)
-            }
-    
-            if ($serverHost)
-            {
-                Write-Verbose "Server host found"
-                if ($PSCmdlet.ShouldProcess($serverHost), "Server host unmapped")
-                {
-                    if ($Force)
-                    {
-                        $serverHost.ForceUnmap() | Out-Null
-                        Write-Verbose "Forcibly unmappws server host"
-                    }
-                    else
-                    {
-                        $serverHost.Unmap() | Out-Null
-                        Write-Verbose "Unmapped server host"
-                    }
-                }
-            }
         }
         else
         {
             Write-Warning "Host instance not found"
+        }
+
+        $serverHost = ([WmiClass]"root/MicrosoftBizTalkServer:MSBTS_ServerHost").GetInstances() | Where-Object {
+            ($_.HostName -eq $HostName) -and ($_.ServerName -eq $ComputerName)
+        }
+
+        if ($serverHost)
+        {
+            Write-Verbose "Server host found"
+            if ($PSCmdlet.ShouldProcess($serverHost), "Server host unmapped")
+            {
+                if ($Force)
+                {
+                    $serverHost.ForceUnmap() | Out-Null
+                    Write-Verbose "Forcibly unmappws server host"
+                }
+                else
+                {
+                    $serverHost.Unmap() | Out-Null
+                    Write-Verbose "Unmapped server host"
+                }
+            }
+        }
+        else {
+            Write-Warning "Server host not found"
         }
     }
 }
