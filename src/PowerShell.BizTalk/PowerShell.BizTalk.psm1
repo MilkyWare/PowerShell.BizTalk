@@ -1,5 +1,6 @@
 #Requires -RunAsAdministrator
 
+#region Types
 enum BtsAdapterDirection
 {
     Receive
@@ -69,6 +70,7 @@ class BtsHostInstance
     [string]$Logon
     [bool]$IsDisabled
 }
+#endregion
 
 #region Hosts
 function Get-Host
