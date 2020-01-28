@@ -274,70 +274,50 @@ function New-HostInstance
     )
     process
     {
-        Write-Verbose "Checkng for existing server host"
-        $serverHostFound = ([WmiClass]"root/MicrosoftBizTalkServer:MSBTS_ServerHost").GetInstances() | Where-Object {
-            ($_.HostName -eq $HostName) -and ($_.ServerName = $ComputerName) -and $_.IsMapped
+        try
+        {
+            Write-Verbose "Creating server host"
+            [System.Management.ManagementObject]$serverHost = ([WmiClass]"root/MicrosoftBizTalkServer:MSBTS_ServerHost").CreateInstance()
+            $serverHost.HostName = $HostName
+            $serverHost.ServerName = $ComputerName
+            Write-Debug ($serverHost | Out-String)
+    
+            if ($PSCmdlet.ShouldProcess($serverHost, "Installing host instance"))
+            {
+                Write-Verbose "Mapping server host"
+                $serverHost.Map() | Out-Null
+            }
+        }
+        catch
+        {
+            Write-Warning "Server host already mapped"
         }
 
-        if (-not $serverHostFound)
+        try
         {
-            try
-            {
-                Write-Verbose "Creating server host"
-                [System.Management.ManagementObject]$serverHost = ([WmiClass]"root/MicrosoftBizTalkServer:MSBTS_ServerHost").CreateInstance()
-                $serverHost.HostName = $HostName
-                $serverHost.ServerName = $ComputerName
-                Write-Debug ($serverHost | Out-String)
+            [System.Management.ManagementObject]$instance = ([wmiclass]"root/MicrosoftBizTalkServer:MSBTS_HostInstance").CreateInstance()
+            $hostInstanceName = "Microsoft BizTalk Server $HostName $ComputerName"
+            Write-Debug "HostInstanceName = $hostInstanceName"
     
-                if ($PSCmdlet.ShouldProcess($serverHost, "Installing host instance"))
-                {
-                    Write-Verbose "Mapping server host"
-                    $serverHost.Map() | Out-Null
-                }
-            }
-            catch
+            $instance.Name = $hostInstanceName
+            Write-Debug ($instance | Out-String)
+    
+            if ($PSCmdlet.ShouldProcess($instance, "Installing host instance"))
             {
-                throw $_
-            }
-        }
-        else
-        {
-            Write-Verbose "Existing server host found"
-            Write-Debug ($serverHostFound | Out-String)
-        }
+                Write-Verbose "Installing host instance"
+                
+                $username = $Credential.UserName
+                Write-Debug "Username=$username"
 
-        Write-Verbose "Checkng for existing host instance"
-        $instanceFound = ([wmiclass]"root/MicrosoftBizTalkServer:MSBTS_HostInstance").GetInstances() | Where-Object {
-            ($_.HostName -eq $HostName) -and ($_.RunningServer -eq $ComputerName)
-        }
-        if (-not $instanceFound)
-        {
-            try
-            {
-                [System.Management.ManagementObject]$instance = ([wmiclass]"root/MicrosoftBizTalkServer:MSBTS_HostInstance").CreateInstance()
-                $hostInstanceName = "Microsoft BizTalk Server $Name $ComputerName"
-                Write-Debug "HostInstanceName = $hostInstanceName"
-    
-                $instance.Name = $hostInstanceName
-                $instance.HostName = $HostName
-                $instance.RunningServer = $ComputerName
-                Write-Debug ($instance | Out-String)
-    
-                if ($PSCmdlet.ShouldProcess($instance, "Installing host instance"))
-                {
-                    Write-Verbose "Installing host instance"
-                    $instance.Install($Credential.UserName, $Credential.GetNetworkCredential().Password, $true) | Out-Null
-                }
-            }
-            catch
-            {
-                throw $_
+                $password = $Credential.GetNetworkCredential().Password
+                Write-Debug "Password = $password"
+
+                $instance.Install($username, $password, $true) | Out-Null
             }
         }
-        else
+        catch
         {
-            Write-Error "Existing host instance found"
-            Write-Debug ($instanceFound | Out-String)
+            Write-Warning "Host instance already exists"
         }
     }
 }
@@ -401,7 +381,8 @@ function Remove-HostInstance
                 }
             }
         }
-        else {
+        else
+        {
             Write-Warning "Host instance not found"
         }
     }
